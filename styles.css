@@ -202,6 +202,52 @@ img {
   color: #d9c79f;
 }
 
+/* Memorabilia section styling */
+.memorabilia-section {
+  background: linear-gradient(180deg, #0f0d0b, #110f0d 40%);
+  min-height: 80vh;
+  padding: 5rem 0;
+}
+.tribute-card {
+  background: rgba(21, 18, 16, 0.92);
+  border: 1px solid rgba(212, 175, 55, 0.14);
+  border-radius: 28px;
+  padding: 2rem;
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.tribute-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+}
+.tribute-image-wrapper {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+}
+.tribute-image {
+  width: 100%;
+  max-height: 400px;
+  object-fit: contain;
+  object-position: center;
+  transition: transform 0.4s ease;
+}
+.tribute-card:hover .tribute-image {
+  transform: scale(1.05);
+}
+.tribute-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--soft-gold);
+  margin-bottom: 0.5rem;
+}
+.tribute-title {
+  font-size: 1.1rem;
+  color: #e9d7b4;
+  margin-bottom: 0;
+}
+
 /* Footer styling */
 .footer-section {
   background: #070604;
