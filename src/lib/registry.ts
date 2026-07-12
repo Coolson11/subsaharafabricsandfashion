@@ -15,7 +15,7 @@ const REGISTRY_FILE = path.join(process.cwd(), "images-registry.json");
 
 // Helper to get Netlify Blob store
 function getBlobStore() {
-  const isNetlify = !!process.env.NETLIFY || typeof globalThis.Netlify !== 'undefined';
+  const isNetlify = !!process.env.NETLIFY || typeof (globalThis as any).Netlify !== 'undefined';
   if (!isNetlify) return null;
   try {
     return getStore("images-registry");
@@ -29,7 +29,7 @@ export async function readRegistry(): Promise<RegistryImage[]> {
   const store = getBlobStore();
   if (store) {
     try {
-      const data = await store.getJSON<RegistryImage[]>("data");
+      const data = await store.get("data", { type: "json" }) as RegistryImage[];
       if (data) return data;
     } catch (err) {
       console.warn("Failed to read from Netlify Blobs, falling back to local file:", err);
