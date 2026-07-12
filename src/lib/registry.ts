@@ -1,5 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
+import { getStore } from "@netlify/blobs";
 
 export interface RegistryImage {
   id: string;
@@ -12,7 +13,30 @@ export interface RegistryImage {
 
 const REGISTRY_FILE = path.join(process.cwd(), "images-registry.json");
 
+// Helper to get Netlify Blob store
+function getBlobStore() {
+  const isNetlify = !!process.env.NETLIFY || typeof globalThis.Netlify !== 'undefined';
+  if (!isNetlify) return null;
+  try {
+    return getStore("images-registry");
+  } catch (err) {
+    console.warn("Failed to initialize Netlify Blobs:", err);
+    return null;
+  }
+}
+
 export async function readRegistry(): Promise<RegistryImage[]> {
+  const store = getBlobStore();
+  if (store) {
+    try {
+      const data = await store.getJSON<RegistryImage[]>("data");
+      if (data) return data;
+    } catch (err) {
+      console.warn("Failed to read from Netlify Blobs, falling back to local file:", err);
+    }
+  }
+
+  // Fallback to local file registry
   try {
     const data = await fs.readFile(REGISTRY_FILE, "utf-8");
     return JSON.parse(data);
@@ -22,10 +46,24 @@ export async function readRegistry(): Promise<RegistryImage[]> {
 }
 
 export async function writeRegistry(images: RegistryImage[]): Promise<void> {
-  // Ensure the directory exists (in case it is deleted)
-  const dir = path.dirname(REGISTRY_FILE);
-  await fs.mkdir(dir, { recursive: true });
-  await fs.writeFile(REGISTRY_FILE, JSON.stringify(images, null, 2), "utf-8");
+  const store = getBlobStore();
+  if (store) {
+    try {
+      await store.setJSON("data", images);
+      return;
+    } catch (err) {
+      console.warn("Failed to write to Netlify Blobs:", err);
+    }
+  }
+
+  // Fallback to local file registry
+  try {
+    const dir = path.dirname(REGISTRY_FILE);
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(REGISTRY_FILE, JSON.stringify(images, null, 2), "utf-8");
+  } catch (err) {
+    console.error("Failed to write to local registry file:", err);
+  }
 }
 
 export async function addImageToRegistry(image: Omit<RegistryImage, "uploadedAt">): Promise<RegistryImage> {
@@ -52,6 +90,7 @@ export async function removeImageFromRegistry(id: string): Promise<void> {
   const filtered = images.filter((img) => img.id !== id);
   await writeRegistry(filtered);
 }
+
 export async function removeImageByFileKey(fileKey: string): Promise<void> {
   const images = await readRegistry();
   const filtered = images.filter((img) => img.fileKey !== fileKey);
