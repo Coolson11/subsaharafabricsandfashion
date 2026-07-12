@@ -1,4 +1,7 @@
 import { cookies } from "next/headers";
+import crypto from "crypto";
+
+const subtle = crypto.subtle || (crypto as any).webcrypto?.subtle;
 
 const SESSION_COOKIE_NAME = "admin_session";
 const SESSION_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
@@ -8,7 +11,7 @@ const encoder = new TextEncoder();
 
 async function getCryptoKey(secret: string): Promise<CryptoKey> {
   const keyData = encoder.encode(secret);
-  return await crypto.subtle.importKey(
+  return await subtle.importKey(
     "raw",
     keyData,
     { name: "HMAC", hash: { name: "SHA-256" } },
@@ -21,7 +24,7 @@ export async function createSessionToken(username: string): Promise<string> {
   const expiresAt = Date.now() + SESSION_EXPIRY;
   const data = JSON.stringify({ username, expiresAt });
   const key = await getCryptoKey(AUTH_SECRET);
-  const signatureBuffer = await crypto.subtle.sign(
+  const signatureBuffer = await subtle.sign(
     "HMAC",
     key,
     encoder.encode(data)
@@ -50,7 +53,7 @@ export async function verifySessionToken(token: string): Promise<boolean> {
       signatureHex.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16))
     );
     
-    const isValid = await crypto.subtle.verify(
+    const isValid = await subtle.verify(
       "HMAC",
       key,
       signatureBytes,
