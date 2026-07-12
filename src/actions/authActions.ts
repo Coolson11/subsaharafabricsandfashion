@@ -38,7 +38,7 @@ export async function login(prevState: any, formData: FormData) {
 
   await setSessionCookie(username);
   
-  redirect("/cms");
+  redirect("/cms/gallery");
 }
 
 export async function logout() {
